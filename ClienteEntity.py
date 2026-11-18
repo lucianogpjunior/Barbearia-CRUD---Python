@@ -17,13 +17,20 @@ class ClienteEntity:
         return self.cpf
     
     def getTelefone(self) -> str:
-        return self.senha
+        return self.telefone
 
     def getEmail(self) -> str:
         return self.email
 
     def setCpf(self, cpfInput: str) -> None:
-        cpf = cpfInput.encode('utf-8').decode('ascii')
-        cpfCript = base64.b64decode(cpf)
+        cpfCript = base64.b64encode(cpfInput.encode('utf-8'))
 
         self.cpf = cpfCript.decode('utf-8')
+
+    def verificarCpf(self, cpfInput: str) -> bool:
+        cpfDecode = base64.b64decode(self.cpf).decode('utf-8')
+        cpfInput = cpfInput.replace('.', '').replace('-', '')
+        if cpfDecode == cpfInput:
+            return True
+        else:
+            return False

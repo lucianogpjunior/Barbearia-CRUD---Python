@@ -1,8 +1,9 @@
-import Database
-import UserEntity
-import ClienteEntity
+from Database import Database
+from UserEntity import UserEntity
+from ClienteEntity import ClienteEntity
 import DependenteEntity
 import AgendamentoEntity
+import mariadb
 from datetime import datetime, timedelta
 
 class Dto:
@@ -17,20 +18,26 @@ class Dto:
 
     def loginUser(self, nomeInput, senhaInput):
         databaseClass = Database()
-        userClass = UserEntity()
-        databaseConnect = databaseClass.conectar_banco
+        databaseConnect = databaseClass.conectar_banco()
 
         cursor = databaseConnect.cursor(dictionary = True)
 
         while True:
 
-            query = "SELECT id, email, senha FROM WHERE nome = %s"
-            cursor.execute(query, (nomeInput))
+            query = "SELECT id, nome, email, senha FROM usuario WHERE nome = %s"
+            cursor.execute(query, (nomeInput,))
             user = cursor.fetchone()
 
             if user:
                 try:
+                    userClass = UserEntity(
+                        user['id'],
+                        user['nome'],
+                        user['email'],
+                        user['senha']
+                    )
                     senhaValidate = userClass.verificarSenha(senhaInput)
+
                 except ValueError:
                     senhaValidate = False
                 if senhaValidate:
@@ -61,4 +68,31 @@ class Dto:
             
             return True
 
-    #
+    #ClienteEntity
+
+    def cadastrarCliente(self, cliente ):
+        databaseClass = Database()
+        databaseConnect = databaseClass.conectar_banco()
+        try:
+            cursor = databaseConnect.cursor(dictionary = True)
+
+            query = "INSERT INTO cliente(nome, cpf, telefone, email) VALUES (%s, %s, %s, %s)"
+            cursor.execute(query, (
+                cliente.nome,
+                cliente.cpf,
+                cliente.telefone,
+                cliente.email
+            ))
+
+
+            databaseConnect.commit()
+
+            print("Cliente cadastrado com sucesso!")
+
+        except mariadb.Error as err:
+            databaseConnect.rollback()
+            print(f"Erro ao cadastrar cliente: {err}")
+
+        finally:
+            cursor.close()
+            databaseConnect.close()
